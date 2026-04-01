@@ -1,81 +1,89 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Message from "./Message";
 import "../App.css";
 
 function ChatWindow() {
-    const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState("");
-    const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState("");
 
-    const handleSendMessage = async () => {
-        if (input.trim() === "") return;
+  // Generate unique session ID once
+  useEffect(() => {
+    const id = Date.now().toString();
+    setSessionId(id);
+  }, []);
 
-        const userMessage = { text: input, sender: "user" };
+  const handleSendMessage = async () => {
+    if (input.trim() === "") return;
 
-        setMessages((prevMessages) => [...prevMessages, userMessage]);
-        setInput("");
-        setLoading(true);
+    const userMessage = { text: input, sender: "user" };
 
-        try {
-            const response = await axios.post("http://localhost:5000/api/chat", {
-                message: input,
-            });
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setInput("");
+    setLoading(true);
 
-            const botMessage = {
-                text: response.data.reply,
-                sender: "bot",
-            };
+    try {
+      const response = await axios.post("http://localhost:5000/api/chat", {
+        message: input,
+        sessionId: sessionId,
+      });
 
-            setMessages((prevMessages) => [...prevMessages, botMessage]);
-        } catch (error) {
-            const errorMessage = {
-                text: "Error: Unable to fetch response from server.",
-                sender: "bot",
-            };
+      const botMessage = {
+        text: response.data.reply,
+        sender: "bot",
+      };
 
-            setMessages((prevMessages) => [...prevMessages, errorMessage]);
-        }
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+    } catch (error) {
+      const errorMessage = {
+        text: "Error: Unable to fetch response from server.",
+        sender: "bot",
+      };
 
-        setLoading(false);
-    };
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    }
 
-    const handleKeyPress = (event) => {
-        if (event.key === "Enter") {
-            handleSendMessage();
-        }
-    };
+    setLoading(false);
+  };
 
-    return (
-        <div className="chat-container">
-            <h2 className="chat-header">AI Chatbot Assistant</h2>
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSendMessage();
+    }
+  };
 
-            <div className="chat-box">
-                {messages.length === 0 && (
-                    <p className="welcome-text">
-                        Ask me anything about college or company information!
-                    </p>
-                )}
+  return (
+    <div className="chat-container">
+      <h2 className="chat-header">AI Chatbot Assistant</h2>
 
-                {messages.map((msg, index) => (
-                    <Message key={index} text={msg.text} sender={msg.sender} />
-                ))}
+      <div className="chat-box">
+        {messages.length === 0 && (
+          <p className="welcome-text">
+            Ask me anything about college or company information!
+          </p>
+        )}
 
-                {loading && <p className="loading">Bot is typing...</p>}
-            </div>
+        {messages.map((msg, index) => (
+          <Message key={index} text={msg.text} sender={msg.sender} />
+        ))}
 
-            <div className="input-container">
-                <input
-                    type="text"
-                    placeholder="Type your question..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                />
-                <button onClick={handleSendMessage}>Send</button>
-            </div>
-        </div>
-    );
+        {loading && <p className="loading">Bot is typing...</p>}
+      </div>
+
+      <div className="input-container">
+        <input
+          type="text"
+          placeholder="Type your question..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <button onClick={handleSendMessage}>Send</button>
+      </div>
+    </div>
+  );
 }
 
 export default ChatWindow;

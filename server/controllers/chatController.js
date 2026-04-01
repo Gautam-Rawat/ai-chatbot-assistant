@@ -6,18 +6,37 @@ const path = require("path");
 const faqPath = path.join(__dirname, "../data/faq.json");
 const faqData = JSON.parse(fs.readFileSync(faqPath, "utf-8"));
 
-// Simple memory (context)
-let conversationHistory = [];
+// In-memory session storage
+const sessions = {};
+
+// Limit conversation length (avoid memory leak)
+const MAX_HISTORY = 10;
 
 exports.handleChat = async (req, res) => {
-  const { message } = req.body;
+  const { message, sessionId } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({
+      error: "sessionId is required",
+    });
+  }
+
+  // Initialize session if not exists
+  if (!sessions[sessionId]) {
+    sessions[sessionId] = [];
+  }
 
   const userMessage = message.toLowerCase();
 
-  // Store user message in memory
-  conversationHistory.push({ role: "user", content: message });
+  // Add user message
+  sessions[sessionId].push({ role: "user", content: message });
 
-  // ✅ STEP 1: Check FAQ FIRST (fast + free)
+  // Limit history size
+  if (sessions[sessionId].length > MAX_HISTORY) {
+    sessions[sessionId] = sessions[sessionId].slice(-MAX_HISTORY);
+  }
+
+  // ✅ STEP 1: FAQ check
   const matchedFAQ = faqData.find((item) =>
     userMessage.includes(item.question)
   );
@@ -25,12 +44,12 @@ exports.handleChat = async (req, res) => {
   if (matchedFAQ) {
     const reply = matchedFAQ.answer;
 
-    conversationHistory.push({ role: "assistant", content: reply });
+    sessions[sessionId].push({ role: "assistant", content: reply });
 
     return res.json({ reply });
   }
 
-  // ✅ STEP 2: Use OpenAI if no FAQ match
+  // ✅ STEP 2: OpenAI call
   try {
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
@@ -42,7 +61,7 @@ exports.handleChat = async (req, res) => {
             content:
               "You are an AI assistant that helps with college and company-related queries.",
           },
-          ...conversationHistory
+          ...sessions[sessionId],
         ],
       },
       {
@@ -54,14 +73,12 @@ exports.handleChat = async (req, res) => {
 
     const reply = response.data.choices[0].message.content;
 
-    // Store AI reply
-    conversationHistory.push({ role: "assistant", content: reply });
+    sessions[sessionId].push({ role: "assistant", content: reply });
 
     return res.json({ reply });
   } catch (error) {
     console.error("ERROR:", error.response?.data || error.message);
 
-    // fallback if quota exceeded
     if (
       error.response &&
       error.response.data &&
@@ -70,7 +87,7 @@ exports.handleChat = async (req, res) => {
     ) {
       return res.json({
         reply:
-          "⚠️ OpenAI quota exceeded. But FAQ system is still working. Try asking predefined questions.",
+          "⚠️ OpenAI quota exceeded. FAQ system is still working.",
       });
     }
 
