@@ -22,7 +22,7 @@ data/ → FAQs and documents
 ## ⚙️ Setup Instructions
 
 ### Clone repo
-git clone https://github.com/YOUR_USERNAME/ai-chatbot-assistant.git
+git clone https://github.com/Gautam-Rawat/ai-chatbot-assistant.git
 
 ### Install dependencies
 cd frontend && npm install  
