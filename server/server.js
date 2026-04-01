@@ -5,9 +5,20 @@ require("dotenv").config();
 const chatRoute = require("./routes/chat");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
+// ROUTE
 app.use("/api/chat", chatRoute);
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+// TEST ROUTE (IMPORTANT)
+app.get("/", (req, res) => {
+    res.send("Server is running successfully");
+});
+
+const PORT = 5000;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
