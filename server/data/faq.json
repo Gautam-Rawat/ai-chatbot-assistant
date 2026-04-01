@@ -1,0 +1,22 @@
+[
+    {
+        "question": "what is your college name",
+        "answer": "Our college name is ABC Institute of Technology."
+    },
+    {
+        "question": "where is the college located",
+        "answer": "The college is located in New Delhi, India."
+    },
+    {
+        "question": "what courses are offered",
+        "answer": "We offer B.Tech, M.Tech, MBA, and diploma courses."
+    },
+    {
+        "question": "what is your company name",
+        "answer": "Our company name is XYZ Solutions Pvt Ltd."
+    },
+    {
+        "question": "what services do you provide",
+        "answer": "We provide software development, AI solutions, and cloud services."
+    }
+]
