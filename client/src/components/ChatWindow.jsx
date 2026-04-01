@@ -1,41 +1,81 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import Message from "./Message";
+import "../styles.css";
 
 function ChatWindow() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
 
-  const sendMessage = async () => {
-    const res = await axios.post("http://localhost:5000/api/chat", {
-      message: input,
-    });
+    const handleSendMessage = async () => {
+        if (input.trim() === "") return;
 
-    setMessages([
-      ...messages,
-      { text: input, sender: "user" },
-      { text: res.data.reply, sender: "bot" },
-    ]);
+        const userMessage = { text: input, sender: "user" };
 
-    setInput("");
-  };
+        setMessages((prevMessages) => [...prevMessages, userMessage]);
+        setInput("");
+        setLoading(true);
 
-  return (
-    <div>
-      <div>
-        {messages.map((msg, i) => (
-          <p key={i}>
-            <b>{msg.sender}:</b> {msg.text}
-          </p>
-        ))}
-      </div>
+        try {
+            const response = await axios.post("http://localhost:5000/api/chat", {
+                message: input,
+            });
 
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button onClick={sendMessage}>Send</button>
-    </div>
-  );
+            const botMessage = {
+                text: response.data.reply,
+                sender: "bot",
+            };
+
+            setMessages((prevMessages) => [...prevMessages, botMessage]);
+        } catch (error) {
+            const errorMessage = {
+                text: "Error: Unable to fetch response from server.",
+                sender: "bot",
+            };
+
+            setMessages((prevMessages) => [...prevMessages, errorMessage]);
+        }
+
+        setLoading(false);
+    };
+
+    const handleKeyPress = (event) => {
+        if (event.key === "Enter") {
+            handleSendMessage();
+        }
+    };
+
+    return (
+        <div className="chat-container">
+            <h2 className="chat-header">AI Chatbot Assistant</h2>
+
+            <div className="chat-box">
+                {messages.length === 0 && (
+                    <p className="welcome-text">
+                        Ask me anything about college or company information!
+                    </p>
+                )}
+
+                {messages.map((msg, index) => (
+                    <Message key={index} text={msg.text} sender={msg.sender} />
+                ))}
+
+                {loading && <p className="loading">Bot is typing...</p>}
+            </div>
+
+            <div className="input-container">
+                <input
+                    type="text"
+                    placeholder="Type your question..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                />
+                <button onClick={handleSendMessage}>Send</button>
+            </div>
+        </div>
+    );
 }
 
 export default ChatWindow;
