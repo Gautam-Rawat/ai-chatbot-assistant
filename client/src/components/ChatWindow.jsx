@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Message from "./Message";
-import "../styles.css";
+import "../App.css";
 
 function ChatWindow() {
     const [messages, setMessages] = useState([]);
