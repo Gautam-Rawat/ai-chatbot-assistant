@@ -8,7 +8,6 @@ function ChatWindow() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ USE YOUR RENDER BACKEND URL (NOT localhost)
   const API_URL = "https://ai-chatbot-assistant-khkb.onrender.com/api/chat";
 
   const handleSendMessage = async () => {
