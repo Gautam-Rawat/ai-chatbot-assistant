@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import Message from "./Message";
 import "../App.css";
@@ -7,13 +7,9 @@ function ChatWindow() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState("");
 
-  // Generate unique session ID once
-  useEffect(() => {
-    const id = Date.now().toString();
-    setSessionId(id);
-  }, []);
+  // ✅ USE YOUR RENDER BACKEND URL (NOT localhost)
+  const API_URL = "https://ai-chatbot-assistant-khkb.onrender.com/api/chat";
 
   const handleSendMessage = async () => {
     if (input.trim() === "") return;
@@ -25,9 +21,8 @@ function ChatWindow() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/chat", {
+      const response = await axios.post(API_URL, {
         message: input,
-        sessionId: sessionId,
       });
 
       const botMessage = {
@@ -37,6 +32,8 @@ function ChatWindow() {
 
       setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
+      console.error("FRONTEND ERROR:", error);
+
       const errorMessage = {
         text: "Error: Unable to fetch response from server.",
         sender: "bot",
