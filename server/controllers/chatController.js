@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 const faqData = [
   {
     question: "hello",
@@ -25,27 +27,46 @@ const faqData = [
 ];
 
 exports.handleChat = async (req, res) => {
-  const { message } = req.body;
+  try {
+    const { message } = req.body;
 
-  console.log("Incoming message:", message);
+    if (!message) {
+      return res.status(400).json({
+        error: "Message is required",
+      });
+    }
 
-  // ❌ REMOVE sessionId requirement completely
-  if (!message) {
-    return res.status(400).json({
-      error: "Message is required",
+    const lowerMessage = message.toLowerCase();
+
+    // ✅ STEP 1: Check FAQ first
+    for (let faq of faqData) {
+      if (lowerMessage.includes(faq.question)) {
+        return res.json({ reply: faq.answer });
+      }
+    }
+
+    // ✅ STEP 2: If not found → call Gemini
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [{ text: message }],
+          },
+        ],
+      }
+    );
+
+    const reply =
+      response.data.candidates[0].content.parts[0].text;
+
+    return res.json({ reply });
+
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+
+    return res.status(500).json({
+      error: "Something went wrong",
     });
   }
-
-  const lowerMessage = message.toLowerCase();
-
-  for (let faq of faqData) {
-    if (lowerMessage.includes(faq.question)) {
-      return res.json({ reply: faq.answer });
-    }
-  }
-
-  return res.json({
-    reply:
-      "I'm still learning. Please ask something related to college or company.",
-  });
 };
